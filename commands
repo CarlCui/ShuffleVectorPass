@@ -1,0 +1,4 @@
+opt -S -load=build/ShuffleVectorPass/libShuffleVectorPass.so euler.s
+opt -S euler.s
+
+opt -load build/ShuffleVectorPass/ShuffleVectorPass.dylib -sv -S prog2.s
