@@ -2,15 +2,8 @@
 #define SHUFFLE_VECTOR_OPTIMIZATION_H
 
 #include "llvm/IR/Instructions.h"
+#include "./Patterns.h"
 using namespace llvm;
-
-namespace ShuffleVectorOptimization {
-
-class Pattern {
-public:
-    virtual bool matches(ShuffleVectorInst *inst);
-    virtual bool optimize(ShuffleVectorInst *inst);
-};
 
 class PatternRecognition {
 private:
@@ -22,6 +15,6 @@ public:
     bool optimizeShuffleVectorInst(ShuffleVectorInst *inst);
 };
 
-}
+
 
 #endif

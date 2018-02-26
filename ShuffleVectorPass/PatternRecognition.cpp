@@ -2,7 +2,6 @@
 #include "./PatternRecognition.h"
 #include "./Patterns.h"
 using namespace llvm;
-using namespace ShuffleVectorOptimization;
 
 bool canonicalForm(ShuffleVectorInst *inst) {
     return false;
