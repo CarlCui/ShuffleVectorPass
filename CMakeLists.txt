@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.3)
 
 find_package(LLVM REQUIRED CONFIG)
 
+list( APPEND CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS} -g")
+
 list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 include(AddLLVM)
 
