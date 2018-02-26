@@ -4,6 +4,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "./PatternRecognition.h"
 using namespace llvm;
+using namespace ShuffleVectorOptimization;
 
 namespace {
   struct ShuffleVectorPass : public FunctionPass {

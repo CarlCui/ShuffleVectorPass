@@ -5,6 +5,8 @@
 #include "./Patterns.h"
 using namespace llvm;
 
+namespace ShuffleVectorOptimization {
+
 class PatternRecognition {
 private:
     SmallVector<Pattern *, 8> patterns;
@@ -15,6 +17,6 @@ public:
     bool optimizeShuffleVectorInst(ShuffleVectorInst *inst);
 };
 
-
+}
 
 #endif

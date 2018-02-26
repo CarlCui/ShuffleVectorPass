@@ -6,6 +6,8 @@
 
 using namespace llvm;
 
+namespace ShuffleVectorOptimization {
+
 class Pattern {
 public:
     enum PatternKind {
@@ -36,5 +38,6 @@ public:
     }
 };
 
+}
 
 #endif
