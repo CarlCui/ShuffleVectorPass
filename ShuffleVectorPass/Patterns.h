@@ -1,6 +1,8 @@
 #ifndef PATTERNS_H
 #define PATTERNS_H
 
+#define SIMD_MATCHING
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/Casting.h"
 
@@ -37,6 +39,8 @@ public:
         return P->getKind() == PK_Rotate;
     }
 };
+
+
 
 }
 
