@@ -13,22 +13,26 @@ namespace {
 
     bool runOnFunction(Function &function) override {
 
+      bool modified = false;
+
       for (auto &basicBlock : function) {
         for (auto &instruction : basicBlock) {
 
           if (auto *inst = dyn_cast<ShuffleVectorInst>(&instruction)) {
 
+            errs() << "encountered shufflevector instruction! \n";
+
             PatternRecognition patternRecognition;
 
             bool result = patternRecognition.optimizeShuffleVectorInst(inst);
 
-            errs() << "encountered shufflevector instruction! \n";
-
-            return result;
+            if (result) {
+              modified = true;
+            }
           }
         }
       }
-      return false;
+      return modified;
     }
   };
 }
