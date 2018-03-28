@@ -19,7 +19,9 @@ bool PatternRecognition::optimizeShuffleVectorInst(ShuffleVectorInst *inst) {
 }
 
 PatternRecognition::PatternRecognition() {
-    this->patterns.push_back(new RotationPattern());
+    //this->patterns.push_back(new RotationPattern());
+    //this->patterns.push_back(new RotationPatternIntrinsics());
+    this->patterns.push_back(new RotationPatternIdisa());
 }
 
 PatternRecognition::~PatternRecognition() {
