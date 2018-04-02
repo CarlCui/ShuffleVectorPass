@@ -1,12 +1,31 @@
-#include <chrono>
 #include "./Patterns.h"
 #include "llvm/Support/raw_ostream.h"
-#include "./lib/bitblock.hpp"
 #include "immintrin.h"
 #include "smmintrin.h"
 
 using namespace llvm;
 using namespace ShuffleVectorOptimization;
+
+uint64_t rdtsc(){
+    unsigned int lo,hi;
+    __asm__ __volatile__ ("rdtsc" : "=a" (lo), "=d" (hi));
+    return ((uint64_t)hi << 32) | lo;
+}
+
+void countRdtscUsedCycles() {
+    uint64_t a1 = rdtsc();
+    uint64_t a2 = rdtsc();
+    uint64_t a3 = rdtsc();
+    uint64_t a4 = rdtsc();
+    uint64_t a5 = rdtsc();
+    uint64_t a6 = rdtsc();
+
+    errs() << (a2 - a1) << "\n";
+    errs() << (a3 - a2) << "\n";
+    errs() << (a4 - a3) << "\n";
+    errs() << (a5 - a4) << "\n";
+    errs() << (a6 - a5) << "\n";
+}
 
 void print128_i8(__m128i var)
 {
@@ -26,11 +45,13 @@ void print128_i8(__m128i var)
 bool RotationPattern::matches(ShuffleVectorInst *inst) {
     //errs() << "rotation pattern\n";
 
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
     auto mask = inst->getShuffleMask();
 
     auto maskSize = mask.size();
+
+    countRdtscUsedCycles();
+
+    auto begin = rdtsc();
 
     for (unsigned i = 0; i < maskSize; i ++) {
         mask[i] = i - mask[i];
@@ -48,83 +69,47 @@ bool RotationPattern::matches(ShuffleVectorInst *inst) {
         }
     }
 
-    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-    errs() << "Time difference (nano) = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "\n";
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
 
     //errs() << allEqual << "\n";
 
     return allEqual;
 }
 
-bool RotationPattern::optimize(ShuffleVectorInst *inst) {
-    return false;
-}
+bool RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock zeroVector) {
+    errs() << "rotation pattern idisa\n";
 
+    countRdtscUsedCycles();
 
-bool RotationPatternIdisa::matches(ShuffleVectorInst *inst) {
-    //errs() << "rotation pattern idisa\n";
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-    // SSE experimental implementation
-    auto mask = inst->getShuffleMask();
-
-    auto maskSize = mask.size();
-
-    const int fw = 128 / 16;
-
-    uint8_t maskData[16] = {}; // 16 x i8, zero initialized
-    uint8_t indeces[16] = {}; // an array of indeces ([0, 1, 2, ...])
-    uint8_t lengthMaskArr[16] = {};
-
-    for (unsigned i = 0; i < maskSize; i ++) {
-        maskData[i] = (uint8_t)mask[i];
-        indeces[i] = i;
-        lengthMaskArr[i] = 0xFF;
-    }
-
-    BitBlock maskVector;
-    BitBlock indexVector;
-    BitBlock lengthMaskVector; //
-
-    BitBlock zeroVector = mvmd128<fw>::fill(0);
-
-    maskVector = bitblock128::load_aligned((BitBlock*)&maskData);
-    indexVector = bitblock128::load_aligned((__m128i*)&indeces);
-    lengthMaskVector = bitblock128::load_aligned((__m128i*)&lengthMaskArr);
+    auto begin = rdtsc();
 
     BitBlock result = simd_xor(maskVector, indexVector);
 
     int firstElement = mvmd128<fw>::extract<0>(result);
 
     BitBlock constantFirst = mvmd128<fw>::fill(firstElement);
-    BitBlock constantFirstTillLength = simd128<fw>::ifh(lengthMaskVector, constantFirst, zeroVector);
+    BitBlock constantFirstTillLength = simd128<fw>::ifh(lengthVector, constantFirst, zeroVector);
     BitBlock allEqual = simd128<fw>::sub(result, constantFirstTillLength);
 
     bool allEqualResult  = bitblock::any(allEqual);
 
-    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-
-    //errs() << "Time difference (micro) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "\n";
-    errs() << "Time difference (nano) = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "\n";
-
-    //errs() << allEqualResult << "\n";
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
 
     return !allEqualResult;
 }
 
-bool RotationPatternIdisa::optimize(ShuffleVectorInst *inst) {
-    return false;
-}
-
 bool RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
-    //errs() << "rotation pattern intrinsics\n";
-
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+    errs() << "rotation pattern intrinsics\n";
 
     auto mask = inst->getShuffleMask();
 
     auto maskSize = mask.size();
+
+    countRdtscUsedCycles();
+
+    auto begin = rdtsc();
 
     uint8_t maskData[16] = {}; // 16 x i8, zero initialized
     uint8_t indeces[16] = {}; // an array of indeces ([0, 1, 2, ...])
@@ -154,16 +139,10 @@ bool RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
 
     int allEqualResult = _mm_testz_si128(allEqual, _mm_setzero_si128());
 
-    std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-
-    //errs() << "Time difference (micro) = " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() << "\n";
-    errs() << "Time difference (nano) = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "\n";
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
 
     //errs() << allEqualResult << "\n";
 
     return allEqualResult == 0;
-}
-
-bool RotationPatternIntrinsics::optimize(ShuffleVectorInst *inst) {
-    return false;
 }
