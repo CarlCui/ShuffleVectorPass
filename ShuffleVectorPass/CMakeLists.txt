@@ -8,6 +8,9 @@ add_llvm_loadable_module(ShuffleVectorPass
   PatternRecognition.h
   Patterns.h
 
+  PatternMetadata.h
+  PatternMetadata.cpp
+
   lib
 
   PLUGIN_TOOL

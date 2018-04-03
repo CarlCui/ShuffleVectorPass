@@ -42,7 +42,7 @@ void print128_i8(__m128i var)
     errs() << "]\n";
 }
 
-bool RotationPattern::matches(ShuffleVectorInst *inst) {
+PatternMetadata *RotationPattern::matches(ShuffleVectorInst *inst) {
     //errs() << "rotation pattern\n";
 
     auto mask = inst->getShuffleMask();
@@ -72,35 +72,44 @@ bool RotationPattern::matches(ShuffleVectorInst *inst) {
     auto end = rdtsc();
     errs() << "cycles = " << (end - begin) << "\n";
 
-    //errs() << allEqual << "\n";
+    if (allEqual) {
+        return (new PatternMetadataRotate(mask[0]));
+    }
 
-    return allEqual;
+    return NULL;
 }
 
-bool RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock zeroVector) {
-    errs() << "rotation pattern idisa\n";
+PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+    // errs() << "rotation pattern idisa\n";
 
     countRdtscUsedCycles();
 
     auto begin = rdtsc();
 
-    BitBlock result = simd_xor(maskVector, indexVector);
+    BitBlock diff = simd<fw>::sub(indexVector, maskVector);
+    BitBlock modded = simd<fw>::add(diff, lengthVector);
+    BitBlock cmpMask = simd<fw>::gt(diff, zeroVector);
+    BitBlock result = simd<fw>::ifh(cmpMask, diff, modded);
 
-    int firstElement = mvmd128<fw>::extract<0>(result);
+    int firstElement = mvmd<fw>::extract<0>(result);
 
-    BitBlock constantFirst = mvmd128<fw>::fill(firstElement);
-    BitBlock constantFirstTillLength = simd128<fw>::ifh(lengthVector, constantFirst, zeroVector);
-    BitBlock allEqual = simd128<fw>::sub(result, constantFirstTillLength);
+    BitBlock constantFirst = mvmd<fw>::fill(firstElement);
+    BitBlock constantFirstTillLength = simd<fw>::ifh(lengthMaskVector, constantFirst, zeroVector);
+    BitBlock allEqual = simd<fw>::sub(result, constantFirstTillLength);
 
     bool allEqualResult  = bitblock::any(allEqual);
 
     auto end = rdtsc();
     errs() << "cycles = " << (end - begin) << "\n";
 
-    return !allEqualResult;
+    if (!allEqualResult) {
+        return (new PatternMetadataRotate(firstElement));
+    }
+
+    return NULL;
 }
 
-bool RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
+PatternMetadata *RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
     errs() << "rotation pattern intrinsics\n";
 
     auto mask = inst->getShuffleMask();
@@ -144,5 +153,9 @@ bool RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
 
     //errs() << allEqualResult << "\n";
 
-    return allEqualResult == 0;
+    if (allEqualResult == 0) {
+        return (new PatternMetadataRotate(firstElement));;
+    }
+
+    return NULL;
 }
