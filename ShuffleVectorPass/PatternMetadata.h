@@ -10,7 +10,9 @@ namespace ShuffleVectorOptimization {
 class PatternMetadata {
 public:
     enum PatternMDKind {
-        PMDK_Rotate
+        PMDK_Rotate,
+        PMDK_Broadcast,
+        PMDK_Original
     };
 
     PatternMetadata(PatternMDKind K) : Kind(K) {}
@@ -31,6 +33,30 @@ public:
 
     static bool classof(const PatternMetadata *P) {
         return P->getKind() == PMDK_Rotate;
+    }
+
+    MDNode *asMDNode(LLVMContext &context) override;
+};
+
+class PatternMetadataBroadcast : public PatternMetadata {
+private:
+    int index;
+public:
+    PatternMetadataBroadcast(int index) : PatternMetadata(PMDK_Broadcast), index(index) {}
+
+    static bool classof(const PatternMetadata *P) {
+        return P->getKind() == PMDK_Broadcast;
+    }
+
+    MDNode *asMDNode(LLVMContext &context) override;
+};
+
+class PatternMetadataOriginal : public PatternMetadata {
+public:
+    PatternMetadataOriginal() : PatternMetadata(PMDK_Original) {}
+
+    static bool classof(const PatternMetadata *P) {
+        return P->getKind() == PMDK_Original;
     }
 
     MDNode *asMDNode(LLVMContext &context) override;

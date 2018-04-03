@@ -71,9 +71,18 @@ bool PatternRecognition::optimizeShuffleVectorInst(ShuffleVectorInst *inst) {
 }
 
 PatternRecognition::PatternRecognition() {
+    this->addAllIdisaPatterns();
+    //this->addAllSequentialPatterns();
+}
+
+void PatternRecognition::addAllSequentialPatterns() {
     this->patterns.push_back(new RotationPattern());
-    //this->patterns.push_back(new RotationPatternIntrinsics());
-    //this->patterns.push_back(new RotationPatternIdisa());
+}
+
+void PatternRecognition::addAllIdisaPatterns() {
+    this->patterns.push_back(new OriginalPatternIdisa());
+    this->patterns.push_back(new BroadcastPatternIdisa());
+    this->patterns.push_back(new RotationPatternIdisa());
 }
 
 PatternRecognition::~PatternRecognition() {

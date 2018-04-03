@@ -80,7 +80,7 @@ PatternMetadata *RotationPattern::matches(ShuffleVectorInst *inst) {
 }
 
 PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
-    // errs() << "rotation pattern idisa\n";
+    errs() << "rotation pattern idisa\n";
 
     countRdtscUsedCycles();
 
@@ -104,6 +104,48 @@ PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock ind
 
     if (!allEqualResult) {
         return (new PatternMetadataRotate(firstElement));
+    }
+
+    return NULL;
+}
+
+PatternMetadata *BroadcastPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+    errs() << "broadcast pattern idisa\n";
+
+    auto begin = rdtsc();
+
+    int firstElement = mvmd<fw>::extract<0>(maskVector);
+
+    BitBlock constantFirst = mvmd<fw>::fill(firstElement);
+    BitBlock constantFirstTillLength = simd<fw>::ifh(lengthMaskVector, constantFirst, zeroVector);
+    BitBlock allEqual = simd<fw>::sub(maskVector, constantFirstTillLength);
+
+    bool allEqualResult  = bitblock::any(allEqual);
+
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
+
+    if (!allEqualResult) {
+        return (new PatternMetadataBroadcast(firstElement));
+    }
+
+    return NULL;
+}
+
+PatternMetadata *OriginalPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+    errs() << "original pattern idisa\n";
+
+    auto begin = rdtsc();
+
+    BitBlock diff = simd<fw>::sub(maskVector, indexVector);
+
+    bool someNoneZero = bitblock::any(diff);
+
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
+
+    if (!someNoneZero) {
+        return (new PatternMetadataOriginal());
     }
 
     return NULL;

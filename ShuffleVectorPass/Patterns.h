@@ -20,7 +20,10 @@ public:
         PK_Seq_Rotate_Intrinsics, // experimental
 
         PK_Idida,
+        PK_Idida_Original,
+        PK_Idisa_Broadcast,
         PK_Idisa_Rotate
+
     };
 
     Pattern(PatternKind K) : Kind(K) {}
@@ -69,10 +72,44 @@ class PatternIdisa : public Pattern {
 public:
     PatternIdisa(PatternKind K) : Pattern(K) {}
 
-    virtual PatternMetadata *matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) = 0;
+    virtual PatternMetadata *matches(BitBlock maskVector,
+                                     BitBlock indexVector,
+                                     BitBlock lengthVector,
+                                     BitBlock lengthMaskVector,
+                                     BitBlock zeroVector) = 0;
 
     static bool classof(const Pattern *P) {
         return P->getKind() >= PK_Idida && P->getKind() <= PK_Idisa_Rotate;
+    }
+};
+
+class BroadcastPatternIdisa : public PatternIdisa {
+public:
+    BroadcastPatternIdisa() : PatternIdisa(PK_Idisa_Broadcast) {}
+
+    PatternMetadata *matches(BitBlock maskVector,
+                              BitBlock indexVector,
+                              BitBlock lengthVector,
+                              BitBlock lengthMaskVector,
+                              BitBlock zeroVector) override;
+
+    static bool classof(const Pattern *P) {
+        return P->getKind() == PK_Idisa_Broadcast;
+    }
+};
+
+class OriginalPatternIdisa : public PatternIdisa {
+public:
+    OriginalPatternIdisa() : PatternIdisa(PK_Idida_Original) {}
+
+    PatternMetadata *matches(BitBlock maskVector,
+                              BitBlock indexVector,
+                              BitBlock lengthVector,
+                              BitBlock lengthMaskVector,
+                              BitBlock zeroVector) override;
+
+    static bool classof(const Pattern *P) {
+        return P->getKind() == PK_Idida_Original;
     }
 };
 
