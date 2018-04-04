@@ -11,6 +11,8 @@ class PatternRecognition {
 private:
     SmallVector<Pattern *, 8> patterns;
     Pattern *recognizePattern();
+    void addAllSequentialPatterns();
+    void addAllIdisaPatterns();
 public:
     PatternRecognition();
     ~PatternRecognition();
