@@ -79,8 +79,14 @@ PatternMetadata *RotationPattern::matches(ShuffleVectorInst *inst) {
     return NULL;
 }
 
-PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *RotationPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "rotation pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     countRdtscUsedCycles();
 
@@ -109,8 +115,14 @@ PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock ind
     return NULL;
 }
 
-PatternMetadata *BroadcastPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *BroadcastPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "broadcast pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     auto begin = rdtsc();
 
@@ -132,8 +144,14 @@ PatternMetadata *BroadcastPatternIdisa::matches(BitBlock maskVector, BitBlock in
     return NULL;
 }
 
-PatternMetadata *OriginalPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *OriginalPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "original pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     auto begin = rdtsc();
 

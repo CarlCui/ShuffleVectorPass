@@ -7,6 +7,8 @@ using namespace llvm;
 
 namespace ShuffleVectorOptimization {
 
+#define PATTERN_METADATA_KIND_ID "shuffleVector.pattern"
+
 class PatternMetadata {
 public:
     enum PatternMDKind {
