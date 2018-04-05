@@ -21,8 +21,8 @@ public:
         PK_Idida,
         PK_Idida_Original,
         PK_Idisa_Broadcast,
+        PK_Idisa_Merge,
         PK_Idisa_Rotate
-
     };
 
     Pattern(PatternKind K) : Kind(K) {}
@@ -108,6 +108,17 @@ public:
 
     static bool classof(const Pattern *P) {
         return P->getKind() == PK_Idisa_Rotate;
+    }
+};
+
+class MergePatternIdisa : public PatternIdisa {
+    public:
+    MergePatternIdisa() : PatternIdisa(PK_Idisa_Merge) {}
+
+    PatternMetadata * matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
+
+    static bool classof(const Pattern *P) {
+        return P->getKind() == PK_Idisa_Merge;
     }
 };
 

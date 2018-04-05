@@ -32,6 +32,12 @@
                         <4 x i32> <i32 1, i32 2, i32 3, i32 0> ;; rotate left by 2
     %13 = shufflevector <4 x i32> %2, <4 x i32> undef,
                         <4 x i32> <i32 3, i32 0, i32 1, i32 2> ;; rotate left by 2
+    %14 = shufflevector <4 x i32> %2, <4 x i32> %2,
+                        <4 x i32> <i32 0, i32 5, i32 2, i32 3> ;; merge
+    %15 = shufflevector <4 x i32> %2, <4 x i32> %2,
+                        <4 x i32> <i32 0, i32 5, i32 6, i32 7> ;; merge 2
+    %16 = shufflevector <4 x i32> %2, <4 x i32> %2,
+                        <4 x i32> <i32 0, i32 2, i32 6, i32 7> ;; false merge
 
     ret i32 0
 }

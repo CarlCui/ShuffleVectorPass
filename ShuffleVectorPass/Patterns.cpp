@@ -169,6 +169,42 @@ PatternMetadata *OriginalPatternIdisa::matches(ShuffleVectorInst *inst, CommonVe
     return NULL;
 }
 
+PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
+    errs() << "merge pattern idisa\n";
+
+    auto maskLength = inst->getShuffleMask().size();
+    auto vectorLength0 = inst->getOperand(0)->getType()->getVectorNumElements();
+    auto vectorLength1 = inst->getOperand(1)->getType()->getVectorNumElements();
+
+    if ((maskLength != vectorLength0) || (maskLength != vectorLength1)) {
+        return NULL;
+    }
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
+
+    auto begin = rdtsc();
+
+    BitBlock diff = simd<fw>::sub(maskVector, indexVector);
+    BitBlock modded = simd<fw>::sub(diff, mvmd<fw>::fill(maskLength));
+    BitBlock gtMask = simd<fw>::gt(diff, zeroVector);
+    BitBlock result = simd<fw>::ifh(gtMask, modded, diff);
+
+    bool someNoneZero = bitblock::any(result);
+
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
+
+    if (!someNoneZero) {
+        return (new PatternMetadataMerge());
+    }
+
+    return NULL;
+}
+
 PatternMetadata *RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
     errs() << "rotation pattern intrinsics\n";
 

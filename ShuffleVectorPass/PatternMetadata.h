@@ -14,7 +14,8 @@ public:
     enum PatternMDKind {
         PMDK_Rotate,
         PMDK_Broadcast,
-        PMDK_Original
+        PMDK_Original,
+        PMDK_Merge
     };
 
     PatternMetadata(PatternMDKind K) : Kind(K) {}
@@ -59,6 +60,17 @@ public:
 
     static bool classof(const PatternMetadata *P) {
         return P->getKind() == PMDK_Original;
+    }
+
+    MDNode *asMDNode(LLVMContext &context) override;
+};
+
+class PatternMetadataMerge : public PatternMetadata {
+public:
+    PatternMetadataMerge() : PatternMetadata(PMDK_Merge) {}
+
+    static bool classof(const PatternMetadata *P) {
+        return P->getKind() == PMDK_Merge;
     }
 
     MDNode *asMDNode(LLVMContext &context) override;
