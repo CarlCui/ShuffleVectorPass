@@ -11,6 +11,11 @@ add_llvm_loadable_module(ShuffleVectorPass
   PatternMetadata.h
   PatternMetadata.cpp
 
+  CommonVectors.h
+  CommonVectors.cpp
+
+  FieldWidth.h
+
   lib
 
   PLUGIN_TOOL
