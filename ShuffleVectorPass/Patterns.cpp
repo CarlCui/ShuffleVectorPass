@@ -79,8 +79,14 @@ PatternMetadata *RotationPattern::matches(ShuffleVectorInst *inst) {
     return NULL;
 }
 
-PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *RotationPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "rotation pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     countRdtscUsedCycles();
 
@@ -109,8 +115,14 @@ PatternMetadata *RotationPatternIdisa::matches(BitBlock maskVector, BitBlock ind
     return NULL;
 }
 
-PatternMetadata *BroadcastPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *BroadcastPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "broadcast pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     auto begin = rdtsc();
 
@@ -132,8 +144,14 @@ PatternMetadata *BroadcastPatternIdisa::matches(BitBlock maskVector, BitBlock in
     return NULL;
 }
 
-PatternMetadata *OriginalPatternIdisa::matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) {
+PatternMetadata *OriginalPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
     errs() << "original pattern idisa\n";
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
 
     auto begin = rdtsc();
 
@@ -146,6 +164,46 @@ PatternMetadata *OriginalPatternIdisa::matches(BitBlock maskVector, BitBlock ind
 
     if (!someNoneZero) {
         return (new PatternMetadataOriginal());
+    }
+
+    return NULL;
+}
+
+PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
+    return NULL;
+}
+
+PatternMetadata *BlendPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
+    errs() << "blend pattern idisa\n";
+
+    auto maskLength = inst->getShuffleMask().size();
+    auto vectorLength0 = inst->getOperand(0)->getType()->getVectorNumElements();
+    auto vectorLength1 = inst->getOperand(1)->getType()->getVectorNumElements();
+
+    if ((maskLength != vectorLength0) || (maskLength != vectorLength1)) {
+        return NULL;
+    }
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
+
+    auto begin = rdtsc();
+
+    BitBlock diff = simd<fw>::sub(maskVector, indexVector);
+    BitBlock modded = simd<fw>::sub(diff, mvmd<fw>::fill(maskLength));
+    BitBlock gtMask = simd<fw>::gt(diff, zeroVector);
+    BitBlock result = simd<fw>::ifh(gtMask, modded, diff);
+
+    bool someNoneZero = bitblock::any(result);
+
+    auto end = rdtsc();
+    errs() << "cycles = " << (end - begin) << "\n";
+
+    if (!someNoneZero) {
+        return (new PatternMetadataBlend());
     }
 
     return NULL;

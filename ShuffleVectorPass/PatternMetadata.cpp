@@ -32,8 +32,37 @@ MDNode *PatternMetadataBroadcast::asMDNode(LLVMContext &context) {
 }
 
 MDNode *PatternMetadataOriginal::asMDNode (LLVMContext &context) {
+    SmallVector<Metadata *, 1> mds;
+
     auto typeMD =  ConstantAsMetadata::get(ConstantInt::get(context, llvm::APInt(32, PMDK_Original, false)));
-    MDNode* N = MDNode::get(context, typeMD);
+
+    mds.push_back(typeMD);
+
+    MDNode* N = MDNode::get(context, mds);
+
+    return N;
+}
+
+MDNode *PatternMetadataMerge::asMDNode (LLVMContext &context) {
+    SmallVector<Metadata *, 1> mds;
+
+    auto typeMD =  ConstantAsMetadata::get(ConstantInt::get(context, llvm::APInt(32, PMDK_Merge, false)));
+
+    mds.push_back(typeMD);
+
+    MDNode* N = MDNode::get(context, mds);
+
+    return N;
+}
+
+MDNode *PatternMetadataBlend::asMDNode (LLVMContext &context) {
+    SmallVector<Metadata *, 1> mds;
+
+    auto typeMD =  ConstantAsMetadata::get(ConstantInt::get(context, llvm::APInt(32, PMDK_Blend, false)));
+
+    mds.push_back(typeMD);
+
+    MDNode* N = MDNode::get(context, mds);
 
     return N;
 }

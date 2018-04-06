@@ -22,6 +22,10 @@ namespace {
 
             errs() << "encountered shufflevector instruction! \n";
 
+            if (inst->getMetadata(PATTERN_METADATA_KIND_ID) != NULL) {
+              continue;
+            }
+
             PatternRecognition patternRecognition;
 
             bool result = patternRecognition.optimizeShuffleVectorInst(inst);

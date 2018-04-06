@@ -5,10 +5,9 @@
 #include "llvm/Support/Casting.h"
 #include "./lib/bitblock.hpp"
 #include "./PatternMetadata.h"
+#include "./CommonVectors.h"
 
 using namespace llvm;
-
-#define fw 8
 
 namespace ShuffleVectorOptimization {
 
@@ -22,8 +21,9 @@ public:
         PK_Idida,
         PK_Idida_Original,
         PK_Idisa_Broadcast,
+        PK_Idisa_Merge,
+        PK_Idisa_Blend,
         PK_Idisa_Rotate
-
     };
 
     Pattern(PatternKind K) : Kind(K) {}
@@ -72,11 +72,7 @@ class PatternIdisa : public Pattern {
 public:
     PatternIdisa(PatternKind K) : Pattern(K) {}
 
-    virtual PatternMetadata *matches(BitBlock maskVector,
-                                     BitBlock indexVector,
-                                     BitBlock lengthVector,
-                                     BitBlock lengthMaskVector,
-                                     BitBlock zeroVector) = 0;
+    virtual PatternMetadata *matches(ShuffleVectorInst *inst, CommonVectors commonVectors) = 0;
 
     static bool classof(const Pattern *P) {
         return P->getKind() >= PK_Idida && P->getKind() <= PK_Idisa_Rotate;
@@ -87,11 +83,7 @@ class BroadcastPatternIdisa : public PatternIdisa {
 public:
     BroadcastPatternIdisa() : PatternIdisa(PK_Idisa_Broadcast) {}
 
-    PatternMetadata *matches(BitBlock maskVector,
-                              BitBlock indexVector,
-                              BitBlock lengthVector,
-                              BitBlock lengthMaskVector,
-                              BitBlock zeroVector) override;
+    PatternMetadata *matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
 
     static bool classof(const Pattern *P) {
         return P->getKind() == PK_Idisa_Broadcast;
@@ -102,11 +94,7 @@ class OriginalPatternIdisa : public PatternIdisa {
 public:
     OriginalPatternIdisa() : PatternIdisa(PK_Idida_Original) {}
 
-    PatternMetadata *matches(BitBlock maskVector,
-                              BitBlock indexVector,
-                              BitBlock lengthVector,
-                              BitBlock lengthMaskVector,
-                              BitBlock zeroVector) override;
+    PatternMetadata *matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
 
     static bool classof(const Pattern *P) {
         return P->getKind() == PK_Idida_Original;
@@ -117,10 +105,32 @@ class RotationPatternIdisa : public PatternIdisa {
 public:
     RotationPatternIdisa() : PatternIdisa(PK_Idisa_Rotate) {}
 
-    PatternMetadata *matches(BitBlock maskVector, BitBlock indexVector, BitBlock lengthVector, BitBlock lengthMaskVector, BitBlock zeroVector) override;
+    PatternMetadata *matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
 
     static bool classof(const Pattern *P) {
         return P->getKind() == PK_Idisa_Rotate;
+    }
+};
+
+class MergePatternIdisa : public PatternIdisa {
+    public:
+    MergePatternIdisa() : PatternIdisa(PK_Idisa_Merge) {}
+
+    PatternMetadata * matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
+
+    static bool classof(const Pattern *P) {
+        return P->getKind() == PK_Idisa_Merge;
+    }
+};
+
+class BlendPatternIdisa : public PatternIdisa {
+    public:
+    BlendPatternIdisa() : PatternIdisa(PK_Idisa_Blend) {}
+
+    PatternMetadata * matches(ShuffleVectorInst *inst, CommonVectors commonVectors) override;
+
+    static bool classof(const Pattern *P) {
+        return P->getKind() == PK_Idisa_Blend;
     }
 };
 
