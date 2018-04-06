@@ -57,7 +57,8 @@ void PatternRecognition::addAllIdisaPatterns() {
     this->patterns.push_back(new OriginalPatternIdisa());
     this->patterns.push_back(new BroadcastPatternIdisa());
     this->patterns.push_back(new RotationPatternIdisa());
-    this->patterns.push_back(new MergePatternIdisa());
+    //this->patterns.push_back(new MergePatternIdisa());
+    this->patterns.push_back(new BlendPatternIdisa());
 }
 
 PatternRecognition::~PatternRecognition() {

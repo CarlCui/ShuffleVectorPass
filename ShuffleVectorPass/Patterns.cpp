@@ -170,7 +170,11 @@ PatternMetadata *OriginalPatternIdisa::matches(ShuffleVectorInst *inst, CommonVe
 }
 
 PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
-    errs() << "merge pattern idisa\n";
+    return NULL;
+}
+
+PatternMetadata *BlendPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
+    errs() << "blend pattern idisa\n";
 
     auto maskLength = inst->getShuffleMask().size();
     auto vectorLength0 = inst->getOperand(0)->getType()->getVectorNumElements();
@@ -199,7 +203,7 @@ PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVecto
     errs() << "cycles = " << (end - begin) << "\n";
 
     if (!someNoneZero) {
-        return (new PatternMetadataMerge());
+        return (new PatternMetadataBlend());
     }
 
     return NULL;
