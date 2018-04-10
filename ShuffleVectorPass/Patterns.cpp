@@ -170,7 +170,39 @@ PatternMetadata *OriginalPatternIdisa::matches(ShuffleVectorInst *inst, CommonVe
 }
 
 PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
-    return NULL;
+    errs() << "merge pattern idisa\n";
+
+    auto maskLength = inst->getShuffleMask().size();
+    auto vectorLength0 = inst->getOperand(0)->getType()->getVectorNumElements();
+    auto vectorLength1 = inst->getOperand(1)->getType()->getVectorNumElements();
+
+    if ((maskLength != vectorLength0 * 2) || (maskLength != vectorLength1 * 2)) {
+        return NULL;
+    }
+
+    auto indexVector = commonVectors.indexVector;
+    auto maskVector = commonVectors.maskVector;
+    auto lengthVector = commonVectors.lengthVector;
+    auto lengthMaskVector = commonVectors.lengthMaskVector;
+    auto zeroVector = commonVectors.zeroVector;
+
+    uint8_t mergeMask[16] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7};
+    BitBlock mergeVector = bitblock::load_aligned((BitBlock*)&mergeMask);
+
+    auto begin = rdtsc();
+
+    BitBlock diff = simd<fw>::sub(maskVector, mergeVector);
+    BitBlock modded = simd<fw>::sub(diff, mvmd<fw>::fill(vectorLength0));
+    BitBlock gtMask = simd<fw>::gt(diff, zeroVector);
+    BitBlock result = simd<fw>::ifh(gtMask, modded, diff);
+
+    auto end = rdtsc();
+
+    for (int i = 0; i < maskLength; i++) {
+        if (mvmd<fw>::extract<2>(result) != 0) return NULL;
+    }
+    
+    return (new PatternMetadataMerge());
 }
 
 PatternMetadata *BlendPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
@@ -242,16 +274,18 @@ PatternMetadata *RotationPatternIntrinsics::matches(ShuffleVectorInst *inst) {
 
     int firstElement = _mm_extract_epi8(result, 0);
 
-    __m128i constantFirst = _mm_set1_epi8((char)firstElement);
-    __m128i constantFirstTillLength = _mm_blendv_epi8(_mm_setzero_si128(), constantFirst, lengthMaskVector);
-    __m128i allEqual = _mm_sub_epi8(result, constantFirstTillLength);
+    // __m128i constantFirst = _mm_set1_epi8((char)firstElement);
+    // __m128i constantFirstTillLength = _mm_blendv_epi8(_mm_setzero_si128(), constantFirst, lengthMaskVector);
+    // __m128i allEqual = _mm_sub_epi8(result, constantFirstTillLength);
 
-    int allEqualResult = _mm_testz_si128(allEqual, _mm_setzero_si128());
+    // int allEqualResult = _mm_testz_si128(allEqual, _mm_setzero_si128());
 
     auto end = rdtsc();
     errs() << "cycles = " << (end - begin) << "\n";
 
     //errs() << allEqualResult << "\n";
+
+    int allEqualResult = 0;
 
     if (allEqualResult == 0) {
         return (new PatternMetadataRotate(firstElement));;

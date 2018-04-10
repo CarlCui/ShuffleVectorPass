@@ -13,6 +13,7 @@ private:
     Pattern *recognizePattern();
     void addAllSequentialPatterns();
     void addAllIdisaPatterns();
+    bool optimizeMerge(ShuffleVectorInst *inst);
 public:
     PatternRecognition();
     ~PatternRecognition();
