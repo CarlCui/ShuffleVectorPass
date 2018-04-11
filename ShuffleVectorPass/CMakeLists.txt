@@ -1,12 +1,11 @@
 add_llvm_loadable_module(ShuffleVectorPass
   ShuffleVectorPass.cpp
 
+  Patterns.h
   Patterns.cpp
 
-  PatternRecognition.cpp
-
   PatternRecognition.h
-  Patterns.h
+  PatternRecognition.cpp
 
   PatternMetadata.h
   PatternMetadata.cpp

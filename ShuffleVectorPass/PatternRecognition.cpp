@@ -14,6 +14,8 @@ bool canonicalForm(ShuffleVectorInst *inst) {
 
 bool PatternRecognition::optimizeShuffleVectorInst(ShuffleVectorInst *inst) {
 
+    bool result = false;
+
     CommonVectors commonVectors = CommonVectors(inst);
 
     PatternMetadata *pm = NULL;
@@ -38,10 +40,16 @@ bool PatternRecognition::optimizeShuffleVectorInst(ShuffleVectorInst *inst) {
     }
 
     if (pm != NULL) {
-        inst->setMetadata(PATTERN_METADATA_KIND_ID, pm->asMDNode(inst->getContext()));
+        if (pm->getKind() == pm->PatternMDKind::PMDK_Merge) {
+            // try to transform merge pattern to other IR instructions
+            result = this->optimizeMerge(inst);
+        } else {
+            // if not optimized, set metadata for backend
+            inst->setMetadata(PATTERN_METADATA_KIND_ID, pm->asMDNode(inst->getContext()));
+        }
     }
 
-    return false;
+    return result;
 }
 
 PatternRecognition::PatternRecognition() {
@@ -57,8 +65,38 @@ void PatternRecognition::addAllIdisaPatterns() {
     this->patterns.push_back(new OriginalPatternIdisa());
     this->patterns.push_back(new BroadcastPatternIdisa());
     this->patterns.push_back(new RotationPatternIdisa());
-    //this->patterns.push_back(new MergePatternIdisa());
+    this->patterns.push_back(new MergePatternIdisa());
     this->patterns.push_back(new BlendPatternIdisa());
+}
+
+bool PatternRecognition::optimizeMerge(ShuffleVectorInst *inst) {
+
+    Value *op1 = inst->getOperand(0);
+    Value *op2 = inst->getOperand(1);
+
+    // only need type of op1 because op1 and op2 must be same type 
+    // since it's a merge pattern    
+    VectorType *opType = cast<VectorType>(op1->getType());
+
+    unsigned numElements = opType->getNumElements();
+    unsigned bitWidth = opType->getBitWidth() / numElements;
+
+    IntegerType *originalIntType = IntegerType::get(inst->getContext(), bitWidth);
+    IntegerType *extendIntType = IntegerType::get(inst->getContext(), 2 * bitWidth);
+    VectorType *zextType = VectorType::get(extendIntType, numElements);
+    VectorType *resultType = VectorType::get(originalIntType, numElements * 2);
+    ConstantInt *constantInt = ConstantInt::getSigned(extendIntType, bitWidth);
+    Constant *constantVector = ConstantVector::getSplat(numElements, constantInt);
+
+    auto zextOp1 = new ZExtInst(op1, zextType, "", (Instruction*)inst);
+    auto zextOp2 = new ZExtInst(op2, zextType, "", (Instruction*)inst);
+    auto shl = BinaryOperator::Create(Instruction::Shl, (Value*)zextOp1, constantVector, "", inst); 
+    auto logicOr = BinaryOperator::Create(Instruction::Or, (Value*)zextOp1, (Value*)zextOp2, "", inst); 
+    auto bitCast = new BitCastInst((Value*)logicOr, resultType, "", inst);
+
+    inst->replaceAllUsesWith((Value*) bitCast);
+
+    return true;
 }
 
 PatternRecognition::~PatternRecognition() {
