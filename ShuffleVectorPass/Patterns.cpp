@@ -187,6 +187,11 @@ PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVecto
     auto zeroVector = commonVectors.zeroVector;
 
     uint8_t mergeMask[16] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7};
+
+    for (int i = maskLength; i < 16; i++) {
+        mergeMask[i] = 0;
+    }
+
     BitBlock mergeVector = bitblock::load_aligned((BitBlock*)&mergeMask);
 
     auto begin = rdtsc();
@@ -196,13 +201,14 @@ PatternMetadata *MergePatternIdisa::matches(ShuffleVectorInst *inst, CommonVecto
     BitBlock gtMask = simd<fw>::gt(diff, zeroVector);
     BitBlock result = simd<fw>::ifh(gtMask, modded, diff);
 
+    bool someNoneZero = bitblock::any(result);
+
     auto end = rdtsc();
 
-    for (int i = 0; i < maskLength; i++) {
-        if (mvmd<fw>::extract<2>(result) != 0) return NULL;
+    if (!someNoneZero) {
+        return (new PatternMetadataMerge());
     }
-    
-    return (new PatternMetadataMerge());
+
 }
 
 PatternMetadata *BlendPatternIdisa::matches(ShuffleVectorInst *inst, CommonVectors commonVectors) {
